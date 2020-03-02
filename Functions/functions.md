@@ -1,4 +1,4 @@
-## This is a list of functions I have written
+## Functions I wrote
 
 
 ### Transpose Matrix
@@ -59,3 +59,50 @@ def most_frequent(lst):
             
     return key_lookup
 ```
+### Making a multiplication table
+```
+def multiplication_table(n):
+    if n < 1:
+        return None
+    else:
+        big_table = []
+        counter = 1
+        
+        while counter <= n:
+            small_table = []
+            for i in range(1,n+1):
+                small_table.append(i * counter)
+            counter += 1
+            big_table.append(small_table)
+            
+    return big_table
+```
+
+### Finding it a number is a palindrome
+```
+def is_palindrome(num):
+    string = str(num)
+    a = len(string)
+    counter = 0
+    decounter = -1
+    while counter < a:
+        if string[counter] != string[(decounter)]:
+            return False
+        counter += 1
+        decounter -= 1
+    return True
+```
+
+### Checking for a prime number
+```
+def is_prime(x):
+    if x >= 2:
+        for y in range(2,x):
+            if not ( x % y ):
+                return False
+    else:
+        return False
+    return True
+```
+
+###### to be *continued*...
