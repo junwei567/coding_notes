@@ -1,2 +1,4 @@
 # coding_notes
-Notes for my university coding class
+Notes for Python3 programming
+Singapore University of Design
+10.009 Digital World 
