@@ -5,7 +5,15 @@ title: 'MySQL Learning Notes'
 MySQL Learning Notes
 ===
 
-[TOC]
+   * [MySQL Learning Notes](#mysql-learning-notes)
+      * [Engines](#engines)
+      * [Editting Table](#editting-table)
+      * [Commands](#commands)
+      * [Types](#types)
+      * [Aggregate Functions](#aggregate-functions)
+      * [Time](#time)
+      * [Design Mode](#design-mode)
+
 
 ## Engines
 ```sql
@@ -18,7 +26,7 @@ CREATE TABLE test (id int) engine=MYISAM
 SET default_storage_engine=MYISAM
 ```
 
-## Commands
+## Editting Table
 **Create Table** (multiple columns)
 Table named users
 id accepts integer values and username accepts text
@@ -70,6 +78,34 @@ CREATE TABLE users (id int primary key AUTO_INCREMENT, name text NOT NULL)
 INSERT INTO users (name) VALUES ('Aaron')
 ```
 
+**Add Column**
+```sql
+ALTER TABLE person 
+ADD COLUMN email VARCHAR(50) NOT NULL
+```
+
+**Add Foreign Key**
+```sql
+ALTER TABLE book
+ADD CONSTRAINT fk_library FOREIGN KEY (library) REFERENCES library(id)
+```
+
+**Add Index**
+A database index is a data structure that improves the speed of operations in a table. While creating index, it should be taken into consideration which all columns will be used to make SQL queries and create one or more indexes on those columns.
+Note that users cannot see the indexes.
+```sql
+ALTER TABLE music
+ADD INDEX idx_band(band)
+```
+
+**Create User**
+```sql
+CREATE user 'JohnDoe'@'localhost' IDENTIFIED BY 'password'
+GRANT SELECT ON database1.* TO JohnDoe@localhost
+```
+
+## Making Queries
+
 **First Query**
 USE the specific database for query
 SELECT the specific columns
@@ -93,7 +129,11 @@ Not equal: !=, <>
 **Operators**
 ```sql
 BETWEEN ... AND
-IN
+
+IN (...)      -- similar to equality
+e.g. 
+SELECT * FROM person WHERE id 
+IN (SELECT id FROM person WHERE id > 2) -- subquery
 
 WHERE last_name LIKE '%tch%'    -- any last_name that has 'tch' inside
                 LIKE 'h____'    -- any word that has 4 letters after 'h'
@@ -111,6 +151,7 @@ WHERE last_name REGEXP 'tch'    -- same as '%tch%'
 ```sql
 SELECT *
 FROM customers
+WHERE id > 5
 ORDER BY state, first_name
 
 -- or
@@ -118,12 +159,24 @@ ORDER BY state, first_name
 ORDER BY id DESC   -- descending order
 ```
 
-**GROUP BY**
+**Group By**
 ```sql
 SELECT gender, AVG(weight) FROM survey GROUP BY gender
 ```
 
+**WHERE** and **HAVING**
+WHERE is used to filer rows before grouping
+HAVING is used to exclude records **after** grouping
+```sql
+SELECT count(*), country 
+FROM survey 
+GROUP BY country 
+HAVING count(*) > 3 
+ORDER BY count(*);
+```
+
 **Distinct**
+Avoiding Duplicates
 ```sql
 SELECT DISTINCT name FROM users
 
@@ -156,6 +209,7 @@ FROM order_items o
 JOIN products p
     ON o.product_id = p.product_id
 
+-- Multiple Joins
 e.g.
 USE sql_invoicing;
 SELECT 
@@ -176,7 +230,7 @@ JOIN payment_methods pm
 USE sql_hr;
 SELECT *
 FROM employees e
-JOIN employees m
+JOIN employees m     -- same table, different alias
     ON e.reports_to = m.employee_id
 ```
 **Compound Join**
@@ -198,7 +252,7 @@ LEFT JOIN orders o
     ON c.customer_id = o.customer_id
 ORDER BY c.customer_id
 ```
-**LEFT JOIN** 
+**Left Join** 
 Takes everything from the left table, so even customers who do not have customer_id in orders table will appear
 
 e.g.
@@ -219,7 +273,7 @@ ORDER BY c.customer_id
 ```sql
 USE sql_hr;
 SELECT 
-	e.employee_id,
+    e.employee_id,
     e.first_name,
     m.first_name AS manager
 FROM employees e
@@ -267,7 +321,7 @@ SELECT
 FROM customers c, products p
 ORDER BY c.first_name
 ```
-**UNION**
+**Union**
 Join data from multiple queries
 Both queries have to have same no. of columns since they join into same columns
 ```sql
@@ -284,10 +338,11 @@ SELECT
     'Archived' AS status
 FROM orders
 WHERE order_date < '2019-01-01'
-
+```
 e.g.
+```sql
 SELECT
-	customer_id,
+    customer_id,
     first_name,
     points,
     'Bronze' AS type
@@ -295,7 +350,7 @@ FROM customers
 WHERE points < 2000
 UNION
 SELECT
-	customer_id,
+    customer_id,
     first_name,
     points,
     'Silver' AS type
@@ -303,7 +358,7 @@ FROM customers
 WHERE points BETWEEN 2000 AND 3000 
 UNION
 SELECT
-	customer_id,
+    customer_id,
     first_name,
     points,
     'Gold' AS type
@@ -311,10 +366,9 @@ FROM customers
 WHERE points > 3000
 
 ORDER BY first_name
-
 ```
 
-**INSERT** 
+**Insert** 
 Insert single row
 ```sql
 INSERT INTO customers (
@@ -406,7 +460,7 @@ unless you uncheck SAFE update
 SET sql_safe_updates=0
 ```
 
-**DELETE**
+**Delete**
 ```sql
 DELETE FROM invoices
 WHERE client_id = (
@@ -414,6 +468,14 @@ WHERE client_id = (
     FROM clients
     WHERE name = 'John'
 )
+```
+
+**Inline Views**
+This is an inefficient way of making queries
+```sql
+SELECT AVG(respondents) 
+FROM (SELECT country,COUNT(*) as respondents FROM survey GROUP BY country) AS totals
+-- making a temporary table for a table
 ```
 
 ## Types
@@ -448,6 +510,83 @@ flavour ENUM('sweer','savoury') DEFAUL 'sweet'
 );
 ```
 
+## Functions
+```sql
+USE TEST;
+SELECT * FROM books;
+-- concatenate
+SELECT CONCAT('Title: ',title) from books;
+-- uppercase
+SELECT UCASE('john');
+-- take first 3 characters on the left
+SELECT LEFT('Singapore', 3);
+-- trim empty spaces on both sides
+SELECT TRIM('   boy   ');
+```
+**Control Flow**
+```sql
+-- if first statement is true, then output 'Hello', else output 'Goodbye'
+SELECT IF (true,'Hello','Goodbye');
+
+SELECT IF(part_id IS NOT NULL,part_id, catalog_id) FROM parts;
+
+WHERE IF(part_id IS NOT NULL, part_id, catalog_id) = 1234
+-- if part_id is null, output catalog_id
+SELECT IFNULL(part_id, catalog_id) AS identifier FROM parts;
+```
+
+**Casting**
+```sql
+SELECT cast('2020-02-28' AS CHAR);
+-- casting integer to char to concat 2 strings
+SELECT CONCAT('No. of books: ', cast(count(*) AS CHAR)) FROM books;
+```
+
+
+## User Defined Functions
+Basic Syntax
+```sql
+DELIMITER $$
+
+CREATE FUNCTION function_name(
+    param1,
+    param2,…
+)
+RETURNS datatype
+[NOT] DETERMINISTIC
+BEGIN
+ -- statements
+END $$
+
+DELIMITER ;
+```
+
+```sql
+DELIMITER $$
+
+CREATE FUNCTION CustomerLevel(
+	credit DECIMAL(10,2)
+) 
+RETURNS VARCHAR(20)
+DETERMINISTIC
+BEGIN
+    DECLARE customerLevel VARCHAR(20);
+
+    IF credit > 50000 THEN
+		SET customerLevel = 'PLATINUM';
+    ELSEIF (credit >= 50000 AND 
+			credit <= 10000) THEN
+        SET customerLevel = 'GOLD';
+    ELSEIF credit < 10000 THEN
+        SET customerLevel = 'SILVER';
+    END IF;
+	-- return the customer level
+	RETURN (customerLevel);
+END$$
+DELIMITER ;
+```
+
+
 ## Aggregate Functions
 **Count**
 Get the number of rows in a table
@@ -463,7 +602,7 @@ SELECT AVG(age) FROM users
 -- MIN,MAX,SUM
 ```
 
-## Time
+## Date and Time
 ```sql
 SELECT now();
 
@@ -478,7 +617,26 @@ sold_at TIMESTAMP default NOW(),
 received DATETIME
 );
 ```
-
+**Current Date**
+```sql
+-- current date add 28 days
+SELECT CURDATE() + INTERVAL 28 DAY;
+-- date minus 2 months
+SELECT DATE_SUB('2020-04-28', INTERVAL 2 MONTH);
+-- getting the name of that day, Tuesday
+SELECT DAYNAME('2020-04-28')
+-- getting the difference in dates, in days
+SELECT DAYDIFF(CURDATE(),'2020-04-28');
+-- days to date
+SELECT FROM_DAYS(366) -- 0001-01-01
+```
+**String to Date**
+```sql
+-- convert date with slashes to conventional date in MySQL
+SELECT STR_TO_DATE('28/04/2020','%d/%m/%Y')
+-- convert date to Tuesday 25th February 2020
+SELECT DATE_FORMAT('2020-02-25','%W %D %M %Y')
+```
 
 ## Design Mode
 
@@ -486,5 +644,114 @@ VARCHAR(50) = variable character, can store up to 50 characters
 PK = Primary Key, will be unique for every row
 NN = Not null, if not checked, this col can be null
 AI = Auto increment
+
+**Foreign Key**
+```sql
+CREATE TABLE person(id INT primary key auto_increment,
+name VARCHAR(50),
+address_id INT,
+FOREIGN KEY (address_id) REFERENCES address(id))
+-- address_id references another table 'address'
+```
+
+**Cascade**
+When a record is deleted from the parent table, the child records with match id will also be deleted.
+```sql
+ON DELETE CASCADE
+ON UPDATE CASCADE
+```
+
+## Locks and Transaction
+**Lock Table**
+```sql
+LOCK TABLES table1 [READ | WRITE]
+UNLOCK TABLES
+```
+**Manual Commit**
+```sql
+SET autocommit=0;
+INSERT INTO books (name) values ('book1');
+commit;  -- book1 will only be added with this command
+
+rollback; -- rollback the previous commit
+```
+**Transaction**
+Instead of toggling autocommit, we can simply start a transaction
+```sql
+START TRANSACTION;
+SELECT * FROM books;
+UPDATE books SET name = 'book2' WHERE id = 2;
+COMMIT;
+```
+**Select ... For Update**
+Locks the row when it is being updated
+```sql
+START TRANSACTION;
+SET @withdraw = 500;
+SET @account = 1;
+
+SELECT balance FROM accounts WHERE id=@account FOR UPDATE;
+UPDATE accounts SET balance = balace - @withdraw WHERE id=@account;
+COMMIT;
+```
+
+**Row Locking**
+Row locking uses indexes
+```sql
+SELECT @@session.tx_isolation; -- default
+
+SET SESSION TRANSACTION ISOLATION LEVEL SERIALIZABLE
+```
+
+**Save Points**
+```sql
+START TRANSACTION
+INSERT INTO books (name) VALUES ('book1');
+SELECT * FROM books;
+DELETE FROM books WHERE id=4;
+SAVEPOINT test1;
+UPDATE books SET name = 'The Animal Book' where id = 1;
+ROLLBACK TO test1;
+ROLLBACK -- make sure to finish the transaction
+```
+
+## Using Variables
+```sql
+SET @user = 'JohnDoe';
+SELECT @user;
+
+SET @min_value = 1;
+SELECT * FROM sales WHERE transaction_value > @ min_value;
+```
+```sql
+SELECT @total := SUM(transaction_value) from sales;
+INSERT INTO sales_history (recorded, total) VALUES (now(), @total);
+```
+**Fixing Select-Updates with Table Locks**
+This prevents sales from getting updated while sales history is being updated. 
+```sql
+LOCK TABLES sales READ, sales_history WRITE;
+SELECT @total := SUM(transaction_value) FROM sales;
+INSERT INTO sales_history (recorded, total) values (now(), @total);
+UNLOCK TABLES;
+```
+
+
+## Challenge
+
+We have a table which gives us a list of seats in a cinema, and tells us which seats are taken/not taken. How can we find out a pair of seats that are free side by side?
+
+```sql
+SELECT 
+    s1.id as 'Seat One ID',
+    s2.id as 'Seat Two ID'
+FROM
+    seats s1
+JOIN
+    seats s2
+ON s1.id + 1 = s2.id  -- this will step up the rows by one
+AND s1.free = true AND s2.free = true
+```
+
 
 
