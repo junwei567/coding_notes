@@ -1,19 +1,19 @@
----
-title: 'MySQL Learning Notes'
----
-
 MySQL Learning Notes
 ===
 
    * [MySQL Learning Notes](#mysql-learning-notes)
       * [Engines](#engines)
       * [Editting Table](#editting-table)
-      * [Commands](#commands)
+      * [Making Queries](#making-queries)
       * [Types](#types)
+      * [Functions](#functions)
+      * [User Defined Functions](#user-defined-functions)
       * [Aggregate Functions](#aggregate-functions)
-      * [Time](#time)
+      * [Date and Time](#date-and-time)
       * [Design Mode](#design-mode)
-
+      * [Locks and Transaction](#locks-and-transaction)
+      * [Using Variables](#using-variables)
+      * [Challenge](#challenge)
 
 ## Engines
 ```sql
@@ -753,5 +753,6 @@ ON s1.id + 1 = s2.id  -- this will step up the rows by one
 AND s1.free = true AND s2.free = true
 ```
 
+### Author
 
-
+Jun Wei
